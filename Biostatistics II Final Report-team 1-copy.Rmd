@@ -1,0 +1,846 @@
+---
+title: "Untitled"
+author: "yitong wang"
+date: "4/7/2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("randomForest")
+library(speff2trial)
+library(tidyverse)
+library(glmnet)
+library(vcdExtra)
+library(tidyverse)
+library(manipulate)
+library(caret)
+library(sandwich)
+library(lmtest)
+library(boot)
+library(pROC)
+library(vars)
+library(car)
+library(Amelia)
+library(randomForest)
+library(knitr)
+library(psych)
+speff2trial::ACTG175
+?ACTG175
+#ACTG175$zprior
+datan <- ACTG175
+datan$zprior <- NULL
+original_names <- colnames(datan)
+```
+
+
+#Single Munipulation
+```{r}
+set.seed(123)
+a.out <- amelia(datan, m = 1, parallel = "multicore")
+
+dat <- data.frame(a.out$imputations)
+colnames(dat) <- original_names
+
+#dat <- ACTG175[complete.cases(ACTG175),]
+#a <- ACTG175$preanti
+#str(a)
+#length(a)
+#sum(a)/length(a)
+
+data <- dat
+a <- (dat$cd420-dat$cd40)/dat$cd40
+data$Y <- as.factor(ifelse(a >= 0.5, 1, 0))
+data1 <-data
+
+# Mannually TABLE 1
+nrow(data1)
+length(data1$str2[data1$str2==0])
+length(data1$str2[data1$str2==1])
+mean(data1$age)
+sd(data1$age)
+mean(data1$wtkg)
+sd(data1$wtkg)
+length(data1$gender[data1$gender==1])
+length(data1$gender[data1$gender==1])*100 /2139
+
+length(data1$race[data1$race==0])
+length(data1$race[data1$race==0])*100 /2139
+
+length(data1$race[data1$race==1])
+length(data1$race[data1$race==1])*100 /2139
+
+length(data1$homo[data1$homo==1]) #1=yes
+length(data1$homo[data1$homo==1])*100 /2139
+
+length(data1$drugs[data1$drugs==1]) #1=yes
+length(data1$drugs[data1$drugs==1])*100 /2139
+
+length(data1$hemo[data1$hemo==1]) #1=yes
+length(data1$hemo[data1$hemo==1])*100 /2139
+
+length(data1$karnof[data1$karnof==100]) #1=yes
+length(data1$karnof[data1$karnof==100])*100 /2139
+
+length(data1$symptom[data1$symptom==1]) #1=yes
+length(data1$symptom[data1$symptom==1])*100 /2139
+
+length(data1$z30[data1$z30==1]) #1=yes
+length(data1$z30[data1$z30==1])*100 /2139
+
+mean(data1$preanti)
+sd(data1$preanti)
+
+length(data1$oprior[data1$oprior==1]) #non-zidovudine antiretroviral therapy
+length(data1$oprior[data1$oprior==1])*100 /2139
+
+length(data1$gender[data1$gender==1 & data1$str2==0]) # 1=male
+length(data1$gender[data1$gender==1& data1$str2==0])*100 /886
+length(data1$gender[data1$gender==1 & data1$str2==1]) 
+length(data1$gender[data1$gender==1& data1$str2==1])*100 /1253
+
+length(data1$race[data1$race==0& data1$str2==0]) # 0=white
+length(data1$race[data1$race==0& data1$str2==0])*100 /886
+length(data1$race[data1$race==0& data1$str2==1]) 
+length(data1$race[data1$race==0& data1$str2==1])*100 /1253
+
+length(data1$race[data1$race==1& data1$str2==0])  # 1=non-white
+length(data1$race[data1$race==1& data1$str2==0])*100 /886
+length(data1$race[data1$race==1& data1$str2==1]) 
+length(data1$race[data1$race==1& data1$str2==1])*100 /1253
+
+length(data1$homo[data1$homo==1& data1$str2==0]) #1=yes
+length(data1$homo[data1$homo==1 & data1$str2==0])*100 /886
+length(data1$homo[data1$homo==1& data1$str2==1]) #1=yes
+length(data1$homo[data1$homo==1 & data1$str2==1])*100 /1253
+
+length(data1$drugs[data1$drugs==1& data1$str2==0]) #1=yes
+length(data1$drugs[data1$drugs==1& data1$str2==0])*100 /886
+length(data1$drugs[data1$drugs==1& data1$str2==1]) #1=yes
+length(data1$drugs[data1$drugs==1& data1$str2==1])*100 /1253
+
+length(data1$hemo[data1$hemo==1& data1$str2==0]) #1=yes
+length(data1$hemo[data1$hemo==1& data1$str2==0])*100 /886
+length(data1$hemo[data1$hemo==1& data1$str2==1]) #1=yes
+length(data1$hemo[data1$hemo==1& data1$str2==1])*100 /1253
+
+length(data1$karnof[data1$karnof==100& data1$str2==0])
+length(data1$karnof[data1$karnof==100& data1$str2==0])*100 /886
+length(data1$karnof[data1$karnof==100& data1$str2==1])
+length(data1$karnof[data1$karnof==100& data1$str2==1])*100 /1253
+
+length(data1$symptom[data1$symptom==1& data1$str2==0])
+length(data1$symptom[data1$symptom==1& data1$str2==0])*100 /886
+length(data1$symptom[data1$symptom==1& data1$str2==1])
+length(data1$symptom[data1$symptom==1& data1$str2==1])*100 /1253
+
+length(data1$z30[data1$z30==1 & data1$str2==0])
+length(data1$z30[data1$z30==1 & data1$str2==0]) /886
+length(data1$z30[data1$z30==1 & data1$str2==1])
+length(data1$z30[data1$z30==1 & data1$str2==1]) /1253
+
+length(data1$strat[data1$strat==3 & data1$str2==0]) #0=naive
+length(data1$strat[data1$strat==3 & data1$str2==0]) /886
+length(data1$strat[data1$strat==1 & data1$str2==1])
+length(data1$strat[data1$strat==1 & data1$str2==1]) /1253
+
+length(data1$oprior[data1$oprior==1 & data1$str2==0]) # 1=male
+length(data1$oprior[data1$oprior==1& data1$str2==0])*100 /886
+length(data1$oprior[data1$oprior==1 & data1$str2==1]) 
+length(data1$oprior[data1$oprior==1& data1$str2==1])*100 /1253
+
+# continuous variables
+
+mean(data1$age[data1$gender==1])
+
+baselineByGroup<- describeBy(data1,data1$str2,mat=TRUE)
+baselineByGroup <- baselineByGroup[,c(-12,-13,-14,-15,-16,-17,-18,-19,-8,-9)]
+str(baselineByGroup)
+NO_PRIOR <- baselineByGroup[baselineByGroup$group1==0, ]
+NO_PRIOR
+PRIOR <- baselineByGroup[baselineByGroup$group1==1, ]
+PRIOR
+```
+
+
+##Question2
+
+###Data Munipulation by removing unrelated variables and spliting data into training and validation data
+```{r}
+data <- dat
+a <- (dat$cd420-dat$cd40)/dat$cd40
+data$Y <- as.factor(ifelse(a >= 0.5, 1, 0))
+data1 <-data
+
+#remove unrelated variables
+#min(data1$zprior)
+data1$pidnum <- NULL
+data1$cd40 <- NULL
+data1$cd420 <- NULL
+data1$cd496 <- NULL
+data1$r <- NULL
+data1$offtrt <- NULL
+data1$cd80 <- NULL
+data1$cd820 <- NULL
+data1$zprior <- NULL
+data1$cens <- NULL
+data1$days <- NULL
+data1$treat <- NULL
+data1$strat <- NULL
+
+#factorize the indicators
+data1$hemo <- factor(data1$hemo)
+data1$homo <- factor(data1$homo)
+data1$drugs <- factor(data1$drugs)
+data1$oprior <- factor(data1$oprior)
+data1$z30 <- factor(data1$z30)
+data1$race <- factor(data1$race)
+data1$gender <- factor(data1$gender)
+data1$str2 <- factor(data1$str2)
+#data1$strat <- factor(data1$strat)
+data1$symptom <- factor(data1$symptom)
+data1$arms <- factor(data1$arms)
+
+#setting up the reference level
+data1$hemo <- relevel(data1$hemo, ref = "0")
+data1$homo <- relevel(data1$homo, ref = "0")
+data1$drugs <- relevel(data1$drugs, ref = "0")
+data1$oprior <- relevel(data1$oprior, ref = "0")
+data1$z30 <- relevel(data1$z30, ref = "0")
+data1$race <- relevel(data1$race, ref = "0")
+data1$gender <- relevel(data1$gender, ref = "0")
+data1$str2 <- relevel(data1$str2, ref = "0")
+#data1$strat <- relevel(data1$strat, ref = "1")
+data1$symptom <- relevel(data1$symptom, ref = "0")
+data1$arms <- relevel(data1$arms, ref = "0")
+
+#length(data1)
+
+#spliting data into validation and training data
+n<-nrow(data1)
+set.seed(123)
+train<- sample(n, n*0.6)
+data1train<- data1[train,]
+data1test<- data1[-train,]
+
+#data <- data.frame(matrix(rnorm(9 * 10), ncol = 9))
+#names(data) <- c(paste0("x", 1:8), "y")
+# First step: using .*. for all interactions
+#f <- as.formula(y ~ .*.)
+#y <- data$y
+# Second step: using model.matrix to take advantage of f
+#x <- model.matrix(f, data)[, -1]
+```
+
+
+
+###model selection by checking out-of-sample AUC
+```{r}
+
+fit1<- glm(Y ~ . , data=data1train, family=binomial)
+fit2<- glm(Y ~ .+age*karnof , data=data1train, family=binomial)
+fit3<- glm(Y ~ .+wtkg*homo , data=data1train, family=binomial)
+fit4<- glm(Y ~ .+hemo*arms , data=data1train, family=binomial)
+fit5<- glm(Y ~ .+homo*arms, data=data1train, family=binomial)
+fit6<- glm(Y ~ .+race*arms , data=data1train, family=binomial)
+fit7<- glm(Y ~ .+race*symptom , data=data1train, family=binomial)
+fit8<- glm(Y ~ .+gender*symptom , data=data1train, family=binomial)
+fit9<- glm(Y ~ .+arms*symptom , data=data1train, family=binomial)
+fit10<- glm(Y ~ .+arms*wtkg , data=data1train, family=binomial)
+fit11<- glm(Y ~ .+arms*drugs , data=data1train, family=binomial)##winner!!
+
+#alias(fit1)
+summary(fit1)
+summary(fit2)
+summary(fit3)
+summary(fit4)
+summary(fit5)
+summary(fit6)
+summary(fit7)
+summary(fit8)
+summary(fit9)
+
+#AUC
+pred1test <- predict(fit1, newdata = data1test, type = 'response')
+pred2test <- predict(fit2, newdata = data1test, type = 'response')
+pred3test <- predict(fit3, newdata = data1test, type = 'response')
+pred4test <- predict(fit4, newdata = data1test, type = 'response')
+pred5test <- predict(fit5, newdata = data1test, type = 'response')
+pred6test <- predict(fit6, newdata = data1test, type = 'response')
+pred7test <- predict(fit7, newdata = data1test, type = 'response')
+pred8test <- predict(fit8, newdata = data1test, type = 'response')
+pred9test <- predict(fit9, newdata = data1test, type = 'response')
+pred10test <- predict(fit10, newdata = data1test, type = 'response')
+pred11test <- predict(fit11, newdata = data1test, type = 'response')
+#as.numeric(ctest$Y)* log(pred1test)
+
+roc1t<-roc(data1test$Y~pred1test)
+roc2t<-roc(data1test$Y~pred2test)
+roc3t<-roc(data1test$Y~pred3test) 
+roc4t<-roc(data1test$Y~pred4test)
+roc5t<-roc(data1test$Y~pred5test) 
+roc6t<-roc(data1test$Y~pred6test)
+roc7t<-roc(data1test$Y~pred7test)
+roc8t<-roc(data1test$Y~pred8test)
+roc9t<-roc(data1test$Y~pred9test) 
+roc10t<-roc(data1test$Y~pred10test)
+roc11t<-roc(data1test$Y~pred11test)
+
+group_compare <-rbind(roc1t$auc,roc2t$auc,roc3t$auc,roc4t$auc,roc5t$auc,roc6t$auc,roc7t$auc,roc8t$auc,roc9t$auc,roc10t$auc,roc11t$auc)
+
+group_compare <- data.frame(group_compare)
+
+rownames(group_compare) <- c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11")
+
+colnames(group_compare) <- "AUC"
+
+knitr::kable(group_compare)
+  
+```
+
+###model selection by using lasso
+```{r}
+library(glmnet)
+
+datan <- as.matrix(data1train)
+
+train.x<- model.matrix(~., data = data1train[,1:14])
+train.y<- as.numeric(datan[,15])
+
+#f <- as.formula(y ~ .*.)
+
+#train.x <- model.matrix(f, data1train)[,-1]
+#datat <- as.matrix(data1test)
+
+test.x <- model.matrix(~., data = data1test[,1:14])
+
+
+cvfit = cv.glmnet(train.x, train.y, family="binomial", type.measure = "auc")
+pred.y = predict(cvfit, test.x, type = "response", s="lambda.1se")
+
+#cvfit$lambda
+#c(cvfit$lambda.min, cvfit$lambda.1se)
+#predict(cvfit, newx=x[1:5,], type="response", s="lambda.1se")
+n <- which(cvfit$lambda == cvfit$lambda.min)
+
+coef(cvfit, s=c(cvfit$lambda[n],0.1))
+
+roct<-roc(data1test$Y~pred.y)
+roct
+plot(roct, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+```
+
+###model selection by using stepwise AUC
+```{r}
+stepAIC(glm(Y ~ (.)^2, data=data1train, family=binomial))
+#fit<- glm(Y ~ age + wtkg + hemo + drugs + karnof + oprior + z30 + preanti + race + gender + arms , data=ctrain, family=binomial)
+
+
+fit <- glm(formula = Y ~ age + wtkg + hemo + homo + drugs + karnof + 
+    oprior + z30 + preanti + race + gender + str2 + symptom + 
+    arms + age:drugs + age:symptom + hemo:z30 + homo:z30 + homo:str2 + 
+    homo:arms + drugs:z30 + drugs:str2 + karnof:symptom + oprior:z30 + 
+    oprior:race + z30:race + preanti:str2 + race:gender + race:str2 + 
+    race:arms + gender:symptom + str2:symptom + str2:arms + symptom:arms, 
+    family = binomial, data = data1train)
+
+
+predtest <- predict(fit, newdata = data1test, type = 'response')
+roct<-roc(data1test$Y~predtest)
+roct
+plot(roct, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+```
+
+###model selection by using random forest
+```{r}
+a <- randomForest(train.x[,-1], factor(train.y))
+predtest <- predict(a, newdata = model.matrix(~.,data1test)[,-1], type = 'prob')
+#nrow(predtest)
+#length(predtest)
+#length(model.matrix(~.,data1test)[,15])
+#nrow(model.matrix(~.,data1test))
+#data1test$Y
+#model.matrix(~.,data1test)
+roct<-roc(factor(data1test$Y)~predtest[,2])
+roct$auc
+plot(roct, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+
+#importance(a)
+#rfcv(train.x, train.y)
+```
+
+
+
+###multivariate&conditional odds ratio
+```{r}
+#fit1<- glm(Y ~ ., data=data1train, family=binomial)
+
+#fit1<- glm(Y ~ (.)^2, data=data1train, family=binomial)
+
+#fit1<- glm(Y ~ . + str2:z30, data=data1train, family=binomial)
+
+fit2<- glm(Y ~ . + arms:drugs, data=data1train, family=binomial) ## selected model
+
+#fit1<- glm(Y ~ . + homo:gender, data=data1train, family=binomial)
+
+#fit1<- glm(Y ~ . + oprior:arms, data=data1train, family=binomial)
+
+
+#summary(fit2)
+
+#coef(fit2)
+
+a <- summary(fit2, corr=T)
+
+#coef(fit2)
+
+age <- exp(coef(fit2)[2])
+
+wtkg <- exp(coef(fit2)[3])
+
+hemo <- exp(coef(fit2)[4])
+
+homo <- exp(coef(fit2)[5])
+
+#drugs <- exp(coef(fit2)[6])###interaction
+
+karnof <- exp(coef(fit2)[7])
+
+oprior <- exp(coef(fit2)[8])
+
+z30 <- exp(coef(fit2)[9])
+
+preanti <- exp(coef(fit2)[10])
+
+race <- exp(coef(fit2)[11])
+
+gender <- exp(coef(fit2)[12])
+
+str2 <- exp(coef(fit2)[13])
+
+symptom <- exp(coef(fit2)[14])
+
+
+odds_fit <- rbind(age, wtkg, hemo, homo, karnof, oprior, z30, preanti, race, gender, str2, symptom)
+
+colnames(odds_fit) <- "Conditional Odds Ratio"
+
+knitr::kable(odds_fit)
+
+```
+
+
+
+###ROC Curve for the selected model
+```{r}
+pred1train <- predict(fit1, newdata = data1train, type = 'response')
+pred1test <- predict(fit1, newdata = data1test, type = 'response')
+
+CE_train1 <- -(mean(as.numeric(data1train$Y) * log(pred1train) + (1-as.numeric(data1train$Y)) * log(1 - pred1train)))
+
+CE_test1 <- -(mean(as.numeric(data1test$Y) * log(pred1test) + (1-as.numeric(data1test$Y)) * log(1 - pred1test)))
+
+cross_entropy <- c(CE_train1, CE_test1)
+cross_entropy
+
+roc1train<-roc(data1train$Y~pred1train)
+roc1test<-roc(data1test$Y~pred1test)
+
+auc_train1 <- roc1train$auc
+auc_test1 <- roc1test$auc
+
+auc <- cbind(auc_train1, auc_test1)
+auc
+
+#plot(roc1train,print.thres=TRUE, print.auc=TRUE, col=3, main="ROC of model 2 train ")
+
+plot(roc1test, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+
+```
+
+##Question3
+```{r}
+library(boot)
+
+dat1 <-ACTG175 %>%
+  filter(arms == 1)
+
+n2 <- nrow(dat1)
+
+dat2 <-ACTG175 %>%
+  filter(arms == 0)
+
+n1 <- nrow(dat2)
+
+a <- (dat1$cd496-dat1$cd40)/dat1$cd40
+dat1$Y <- as.factor(ifelse(a >= 0.5, 1, 0))
+
+b <- (dat2$cd496-dat2$cd40)/dat2$cd40
+dat2$Y <- as.factor(ifelse(b >= 0.5, 1, 0))
+
+end496_2 <- sum(na.omit(dat1$Y==1))
+
+end496_1 <- sum(na.omit(dat2$Y==1))
+
+ate <- (sum(na.omit(dat1$Y==1))/length(na.omit(dat1$Y))) - (sum(na.omit(dat2$Y==1))/length(na.omit(dat2$Y)))
+ate
+
+
+a1 <- (dat1$cd420-dat1$cd40)/dat1$cd40
+dat1$Y1 <- as.factor(ifelse(a1 >= 0.5, 1, 0))
+
+b1 <- (dat2$cd420-dat2$cd40)/dat2$cd40
+dat2$Y1 <- as.factor(ifelse(b1 >= 0.5, 1, 0))
+
+end420_2 <- sum(na.omit(dat1$Y1==1))
+
+end420_1 <- sum(na.omit(dat2$Y1==1))
+
+ate1 <- (end420_2/length(na.omit(dat1$Y1))) - (end420_1/length(na.omit(dat2$Y1)))
+ate1
+
+
+datam <- ACTG175
+
+am <- (datam$cd496-datam$cd40)/datam$cd40
+datam$Y <- as.factor(ifelse(am >= 0.5, 1, 0))
+
+an <- (datam$cd420-datam$cd40)/datam$cd40
+datam$Y1 <- as.factor(ifelse(an >= 0.5, 1, 0))
+
+
+ATE <- function(data, indices){
+  d <- data[indices,]
+  
+    dat1 <-d %>%
+      filter(arms == 1)
+    
+    dat2 <-d %>%
+      filter(arms == 0)
+
+    ate <- (sum(na.omit(dat1$Y==1))/length(na.omit(dat1$Y))) - (sum(na.omit(dat2$Y==1))/length(na.omit(dat2$Y)))
+    
+    ate1 <- (sum(na.omit(dat1$Y1==1))/length(na.omit(dat1$Y1))) - (sum(na.omit(dat2$Y1==1))/length(na.omit(dat2$Y1)))
+  
+  return(c(ate, ate1))
+}
+
+boot_ate <- boot(data = datam, statistic= ATE, R = 100)
+
+boot_ate
+
+se1 <- sd(boot_ate$t[,1])
+
+lower1 <- ate-1.96*se1
+upper1 <- ate + 1.96*se1
+
+se2 <- sd(boot_ate$t[,2])
+
+lower2 <- ate1-1.96*se2
+upper2 <- ate1 + 1.96*se2
+
+n <- cbind(n1, n2)
+
+week20 <- cbind(end420_1, end420_2)
+
+week96 <- cbind(end496_1, end496_2)
+
+tableate <- rbind(n, week20, week96)
+
+colnames(tableate) <- c("Zidovudine", "Zidovudine and Didanosine")
+
+rownames(tableate) <- c("Total", "20 Weeks", "96 Weeks")
+
+ates <- cbind(ate, lower1, upper1)
+ates1 <- cbind(ate1, lower2, upper2)
+
+allate <- rbind(ates1, ates)
+
+rownames(allate) <- c("20 Weeks", "96 Weeks")
+
+colnames(allate) <- c("ATE", "lower CI", "upper CI")
+
+knitr::kable(allate)
+
+knitr::kable(tableate)
+
+#n<-nrow(data1)
+#set.seed(123)
+#train<- sample(n, n*0.6)
+#data1train<- data1[train,]
+#data1test<- data1[-train,]
+```
+
+##Question4
+
+###Data Munipulation
+```{r}
+data1 <-dat
+
+#remove unrelated variables
+#min(data1$zprior)
+data1$pidnum <- NULL
+data1$cd420 <- NULL
+data1$cd496 <- NULL
+data1$r <- NULL
+data1$cd80 <- NULL
+data1$cd820 <- NULL
+data1$zprior <- NULL
+data1$cens <- NULL
+data1$days <- NULL
+data1$treat <- NULL
+data1$strat <- NULL
+
+data1$hemo <- factor(data1$hemo)
+data1$homo <- factor(data1$homo)
+data1$drugs <- factor(data1$drugs)
+data1$oprior <- factor(data1$oprior)
+data1$z30 <- factor(data1$z30)
+data1$race <- factor(data1$race)
+data1$gender <- factor(data1$gender)
+data1$str2 <- factor(data1$str2)
+#data1$strat <- factor(data1$strat)
+data1$symptom <- factor(data1$symptom)
+data1$arms <- factor(data1$arms)
+data1$offtrt <- factor(data1$offtrt)
+str(data1)
+
+data1$hemo <- relevel(data1$hemo, ref = "0")
+data1$homo <- relevel(data1$homo, ref = "0")
+data1$drugs <- relevel(data1$drugs, ref = "0")
+data1$oprior <- relevel(data1$oprior, ref = "0")
+data1$z30 <- relevel(data1$z30, ref = "0")
+data1$race <- relevel(data1$race, ref = "0")
+data1$gender <- relevel(data1$gender, ref = "0")
+data1$str2 <- relevel(data1$str2, ref = "0")
+#data1$strat <- relevel(data1$strat, ref = "1")
+data1$symptom <- relevel(data1$symptom, ref = "0")
+data1$arms <- relevel(data1$arms, ref = "0")
+data1$offtrt <- relevel(data1$offtrt, ref = "0")
+
+length(data1)
+
+n<-nrow(data1)
+set.seed(123)
+train<- sample(n, n*0.6)
+data1train<- data1[train,]
+data1test<- data1[-train,]
+```
+
+###model selection by using lasso
+```{r}
+library(glmnet)
+
+datan <- as.matrix(data1train)
+
+data1train1 <- data1train
+data1train1$offtrt <- NULL
+
+train.x<- model.matrix(~., data = data1train1)
+train.y<- as.numeric(datan[,14])
+
+#f <- as.formula(y ~ .*.)
+
+#train.x <- model.matrix(f, data1train)[,-1]
+#datat <- as.matrix(data1test)
+#data1test$offtrt <- NULL
+
+test.x <- model.matrix(~., data = data1test)
+
+
+cvfit = cv.glmnet(train.x, train.y, family="binomial", type.measure = "auc")
+pred.y = predict(cvfit, test.x, type = "response", s="lambda.1se")
+
+#cvfit$lambda
+#c(cvfit$lambda.min, cvfit$lambda.1se)
+#predict(cvfit, newx=x[1:5,], type="response", s="lambda.1se")
+n <- which(cvfit$lambda == cvfit$lambda.min)
+
+coef(cvfit, s=c(cvfit$lambda[n],0.1))
+
+roct<-roc(data1test$offtrt~pred.y)
+roct
+plot(roct, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+```
+
+###model selection by out-of-sample AUC
+```{r}
+fit1<- glm(offtrt ~. , data=data1train, family=binomial)
+fit2<- glm(offtrt ~. + wtkg*arms, data=data1train, family=binomial)#winner!!!!
+fit3<- glm(offtrt ~. + str2:z30, data=data1train, family=binomial)
+fit5<- glm(offtrt ~. + homo:gender, data=data1train, family=binomial)
+fit6<- glm(offtrt ~. + homo:hemo, data=data1train, family=binomial)
+fit7<- glm(offtrt ~. + oprior:drugs, data=data1train, family=binomial)
+fit8<- glm(offtrt ~. + hemo:gender, data=data1train, family=binomial)
+fit9<- glm(offtrt ~. + homo:drugs, data=data1train, family=binomial)
+fit10<- glm(offtrt ~. + str2:oprior, data=data1train, family=binomial)
+
+summary(fit2)
+
+#AUC
+pred1test <- predict(fit1, newdata = data1test, type = 'response')
+pred2test <- predict(fit2, newdata = data1test, type = 'response')
+pred3test <- predict(fit3, newdata = data1test, type = 'response')
+pred4test <- predict(fit4, newdata = data1test, type = 'response')
+pred5test <- predict(fit5, newdata = data1test, type = 'response')
+pred6test <- predict(fit6, newdata = data1test, type = 'response')
+pred7test <- predict(fit7, newdata = data1test, type = 'response')
+pred8test <- predict(fit8, newdata = data1test, type = 'response')
+pred9test <- predict(fit9, newdata = data1test, type = 'response')
+pred10test <- predict(fit10, newdata = data1test, type = 'response')
+#pred11test <- predict(fit11, newdata = ctest, type = 'response')
+#as.numeric(ctest$Y)* log(pred1test)
+
+roc1t<-roc(data1test$offtrt~pred1test)
+roc2t<-roc(data1test$offtrt~pred2test)
+roc3t<-roc(data1test$offtrt~pred3test) 
+roc4t<-roc(data1test$offtrt~pred4test)
+roc5t<-roc(data1test$offtrt~pred5test) 
+roc6t<-roc(data1test$offtrt~pred6test)
+roc7t<-roc(data1test$offtrt~pred7test)
+roc8t<-roc(data1test$offtrt~pred8test)
+roc9t<-roc(data1test$offtrt~pred9test) 
+roc10t<-roc(data1test$offtrt~pred10test)
+#roc11t<-roc(data1test$Y~pred11test)
+
+group_compare <-rbind(roc1t$auc,roc2t$auc,roc3t$auc,roc4t$auc,roc5t$auc,roc6t$auc,roc7t$auc,roc8t$auc,roc9t$auc,roc10t$auc)
+
+group_compare <- data.frame(group_compare)
+
+rownames(group_compare) <- c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10")
+
+colnames(group_compare) <- "AUC"
+
+knitr::kable(group_compare)
+
+a <- summary(fit2, corr=T)
+```
+###model selection by using stepwise AUC
+```{r}
+stepAIC(glm(offtrt ~ (.)^2, data=data1train, family=binomial))
+#fit<- glm(Y ~ age + wtkg + hemo + drugs + karnof + oprior + z30 + preanti + race + gender + arms , data=ctrain, family=binomial)
+
+
+fit <- glm(formula = offtrt ~ age + wtkg + hemo + homo + drugs + karnof + 
+    oprior + z30 + preanti + race + gender + str2 + symptom + 
+    cd40 + arms + age:oprior + age:gender + wtkg:karnof + wtkg:oprior + 
+    wtkg:cd40 + hemo:drugs + hemo:karnof + hemo:oprior + hemo:race + 
+    homo:karnof + homo:race + drugs:oprior + oprior:z30 + oprior:preanti + 
+    oprior:race + oprior:symptom + oprior:cd40 + oprior:arms + 
+    z30:symptom + preanti:str2 + gender:cd40 + str2:cd40 + symptom:arms, 
+    family = binomial, data = data1train)
+
+
+
+predtest <- predict(fit, newdata = data1test, type = 'response')
+roct<-roc(data1test$offtrt~predtest)
+roct
+plot(roct, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+```
+
+
+
+###model selection by using random forest
+```{r}
+a <- randomForest(train.x[,-1], factor(train.y))
+predtest <- predict(a, newdata = model.matrix(~.,data1test)[,-1], type = 'prob')
+#nrow(predtest)
+#length(predtest)
+#length(model.matrix(~.,data1test)[,15])
+#nrow(model.matrix(~.,data1test))
+#data1test$Y
+#model.matrix(~.,data1test)
+roct<-roc(factor(data1test$offtrt)~predtest[,2])
+roct$auc
+plot(roct, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+
+#importance(a)
+#rfcv(train.x, train.y)
+```
+
+
+###ROC Curve for the final model
+```{r}
+fit2<- glm(offtrt ~. + wtkg*arms, data=data1train, family=binomial)#winner!!!!
+
+pred2train <- predict(fit2, newdata = data1train, type = 'response')
+pred2test <- predict(fit2, newdata = data1test, type = 'response')
+
+CE_train2 <- -(mean(as.numeric(data1train$offtrt) * log(pred2train) + (1-as.numeric(data1train$offtrt)) * log(1 - pred2train)))
+
+CE_test2 <- -(mean(as.numeric(data1test$offtrt) * log(pred2test) + (1-as.numeric(data1test$offtrt)) * log(1 - pred2test)))
+
+cross_entropy2 <- c(CE_train2, CE_test2)
+cross_entropy2
+
+roc2train<-roc(data1train$offtrt~pred2train)
+roc2test<-roc(data1test$offtrt~pred2test)
+
+auc_train2 <- roc2train$auc
+auc_test2 <- roc2test$auc
+
+auc2 <- cbind(auc_train2, auc_test2)
+auc2
+
+#plot(roc2train,print.thres=TRUE, print.auc=TRUE, col=3, main="ROC of model 2 train ")
+
+plot(roc2test, print.thres=TRUE,print.auc=TRUE, col=1, main="ROC of model 1 test")
+```
+
+#marginal risk ratio 
+```{r}
+# marginal risk ratio 
+fit2<- glm(offtrt ~. + wtkg*arms, data=data1, family=binomial)#winner 0.625
+
+  bd0<- data1
+  bd0$str2 <- ifelse(as.numeric(as.character(bd0$str2)) == 1, 0, as.numeric(as.character(bd0$str2)))
+  bd0$str2 <- as.factor(bd0$str2)
+  
+  bd1 <- data1
+  bd1$str2 <- ifelse(as.numeric(as.character(bd1$str2)) == 0, 1, as.numeric(as.character(bd1$str2)))
+  bd1$str2 <- as.factor(bd1$str2)
+
+pb1 <- predict(fit2, newdata = bd1, type = 'response')
+pb0 <- predict(fit2, newdata = bd0, type = 'response')
+rr <- mean(pb1)/mean(pb0)
+
+# 95% confidence interval for rr 
+set.seed(123)
+logit.bootstrap_rr <- function(formula, data, indices) {
+  
+  d <- data[indices, ]
+  fit1 <- glm(formula, data = d, family = 'binomial')
+  
+  bd0<- d
+  bd0$str2 <- ifelse(as.numeric(as.character(bd0$str2)) == 1, 0, as.numeric(as.character(bd0$str2)))
+  bd0$str2 <- as.factor(bd0$str2)
+  
+  bd1 <- d
+  bd1$str2 <- ifelse(as.numeric(as.character(bd1$str2)) == 0, 1, as.numeric(as.character(bd1$str2)))
+  bd1$str2 <- as.factor(bd1$str2)
+
+  ## marginal odds ratio on ldl increase
+  pred<- predict(fit1, newdata = bd0, type = 'response')
+  add1 <- predict(fit1, newdata = bd1, type = 'response')
+  
+  RR1 <- mean(add1) / mean(pred)
+  
+
+  
+  #pb1 <- predict(fit, newdata = bd1, type = 'response')
+  #pb0 <- predict(fit, newdata = bd0, type = 'response')
+  #rr <- mean(pb1)/mean(pb0)
+  return(RR1)
+}
+
+rr_ci <- boot(data=data1, statistic=logit.bootstrap_rr, R=100, formula=offtrt ~. + wtkg*arms)
+rr_ci
+#rr_ci$t
+rr
+se1 <- sd(rr_ci$t)
+
+c(rr-1.96*se1, rr + 1.96*se1)
+
+
+```
+
